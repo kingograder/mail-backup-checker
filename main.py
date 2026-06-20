@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
@@ -30,6 +31,7 @@ async def lifespan(app: FastAPI):
         format=config.logging.FORMAT,
     )
     logger.info("Application starting")
+    Path(config.db.PATH).parent.mkdir(parents=True, exist_ok=True)
     await init_database()
     monitor_task = asyncio.create_task(monitor_mailbox(config, session_factory))
     yield

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import ssl
 from email import message_from_bytes
 
 import aioimaplib
@@ -21,8 +22,18 @@ logger = logging.getLogger(__name__)
 POLL_INTERVAL = 60
 
 
+def _create_ssl_context() -> ssl.SSLContext:
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
 async def connect_to_imap(config: Config):
-    imap_client = aioimaplib.IMAP4_SSL(host=config.mail.IMAP)
+    if config.mail.SSL_VERIFY:
+        imap_client = aioimaplib.IMAP4_SSL(host=config.mail.IMAP)
+    else:
+        imap_client = aioimaplib.IMAP4_SSL(host=config.mail.IMAP, ssl=_create_ssl_context())
     await imap_client.wait_hello_from_server()
     await imap_client.login(config.mail.LOGIN, config.mail.PASSWORD)
     await imap_client.select(config.mail.FOLDER)

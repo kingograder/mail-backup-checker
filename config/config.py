@@ -15,6 +15,7 @@ class MailSettings(Settings):
     PASSWORD: str
     IMAP: str
     FOLDER: str = "Backup"
+    SSL_VERIFY: bool = True
 
 
 class SmtpSettings(Settings):
