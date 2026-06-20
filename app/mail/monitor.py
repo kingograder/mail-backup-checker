@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import ssl
 from email import message_from_bytes
 
 import aioimaplib
@@ -19,28 +18,16 @@ from config.config import Config
 
 logger = logging.getLogger(__name__)
 
-POLL_INTERVAL = 60
-IMAP_TIMEOUT = 30
-
-
-def _create_ssl_context() -> ssl.SSLContext:
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    return ctx
-
 
 async def connect_to_imap(config: Config):
-    ssl_context = None if config.mail.SSL_VERIFY else _create_ssl_context()
     imap_client = aioimaplib.IMAP4_SSL(
-        host=config.mail.IMAP,
-        port=config.mail.PORT,
-        timeout=IMAP_TIMEOUT,
-        ssl_context=ssl_context,
+        host=config.imap.HOST,
+        port=config.imap.PORT,
+        timeout=config.imap.TIMEOUT,
     )
     await imap_client.wait_hello_from_server()
-    await imap_client.login(config.mail.LOGIN, config.mail.PASSWORD)
-    await imap_client.select(config.mail.FOLDER)
+    await imap_client.login(config.imap.LOGIN, config.imap.PASSWORD)
+    await imap_client.select(config.imap.FOLDER)
     return imap_client
 
 
@@ -71,7 +58,7 @@ async def fetch_emails(imap_client, last_uid: int) -> list[dict]:
     emails = []
     for uid in uids:
         try:
-            fetch_resp = await imap_client.uid_fetch(str(uid), "(RFC822)")
+            fetch_resp = await imap_client.protocol.fetch(str(uid), "(RFC822)", by_uid=True)
         except Exception as e:
             logger.warning(f"Failed to fetch email UID={uid}: {e}")
             continue
@@ -81,10 +68,6 @@ async def fetch_emails(imap_client, last_uid: int) -> list[dict]:
 
         raw_email = None
         for line in fetch_resp.lines:
-            if isinstance(line, (bytes, bytearray)) and line.startswith(b"From:"):
-                continue
-            if isinstance(line, (bytes, bytearray)) and b"Subject:" in line:
-                continue
             if isinstance(line, (bytes, bytearray)) and len(line) > 50:
                 raw_email = bytes(line)
                 break
@@ -192,4 +175,4 @@ async def monitor_mailbox(config: Config, session_factory: async_sessionmaker):
                     pass
             imap_client = None
 
-        await asyncio.sleep(POLL_INTERVAL)
+        await asyncio.sleep(config.imap.POLL_INTERVAL)

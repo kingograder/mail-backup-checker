@@ -9,14 +9,15 @@ class Settings(BaseSettings):
     )
 
 
-class MailSettings(Settings):
-    model_config = SettingsConfigDict(env_prefix="MAIL_")
+class ImapSettings(Settings):
+    model_config = SettingsConfigDict(env_prefix="IMAP_")
     LOGIN: str
     PASSWORD: str
-    IMAP: str
+    HOST: str
     PORT: int = 993
     FOLDER: str = "Backup"
-    SSL_VERIFY: bool = True
+    TIMEOUT: int = 30
+    POLL_INTERVAL: int = 60
 
 
 class SmtpSettings(Settings):
@@ -56,7 +57,7 @@ class ApiSettings(Settings):
 
 
 class Config:
-    mail = MailSettings()
+    imap = ImapSettings()
     smtp = SmtpSettings()
     db = DatabaseSettings()
     logging = LogSettings()
