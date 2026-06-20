@@ -31,9 +31,9 @@ def _create_ssl_context() -> ssl.SSLContext:
 
 async def connect_to_imap(config: Config):
     if config.mail.SSL_VERIFY:
-        imap_client = aioimaplib.IMAP4_SSL(host=config.mail.IMAP)
+        imap_client = aioimaplib.IMAP4_SSL(host=config.mail.IMAP, port=config.mail.PORT)
     else:
-        imap_client = aioimaplib.IMAP4_SSL(host=config.mail.IMAP, ssl=_create_ssl_context())
+        imap_client = aioimaplib.IMAP4_SSL(host=config.mail.IMAP, port=config.mail.PORT, ssl=_create_ssl_context())
     await imap_client.wait_hello_from_server()
     await imap_client.login(config.mail.LOGIN, config.mail.PASSWORD)
     await imap_client.select(config.mail.FOLDER)

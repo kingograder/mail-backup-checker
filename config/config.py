@@ -14,6 +14,7 @@ class MailSettings(Settings):
     LOGIN: str
     PASSWORD: str
     IMAP: str
+    PORT: int = 993
     FOLDER: str = "Backup"
     SSL_VERIFY: bool = True
 
