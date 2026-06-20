@@ -1,10 +1,10 @@
 # Mail Backup Checker
 
-Monitoring a mail.ru mailbox for backup notifications with SQLite storage and SMTP alerts.
+Monitoring a mailbox for backup notifications with SQLite storage and SMTP alerts.
 
 ## How it works
 
-1. **IMAP monitoring** — connects to a mail.ru mailbox (folder `Backup`) and periodically checks for new emails
+1. **IMAP monitoring** — connects to a mailbox (folder `Backup`) and periodically checks for new emails
 2. **Parsing** — extracts from email headers: client code, machine name, task, location, organization, index, status
 3. **SQLite** — stores results in a database. Duplicates are filtered by `message_uid`
 4. **SMTP notifications** — on `error`/`warning` statuses, sends email to configured recipients
