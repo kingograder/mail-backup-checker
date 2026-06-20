@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -14,6 +15,9 @@ from app.mail.monitor import monitor_mailbox
 from config.config import config
 
 logger = logging.getLogger(__name__)
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 monitor_task: asyncio.Task | None = None
 
