@@ -130,13 +130,22 @@ async def upsert_client(
     status: StatusesEnum,
     task_title: str,
 ):
-    client = ClientsORM(
-        code=code,
-        last_status=status,
-        last_update=datetime.now(timezone.utc),
-        last_task_title=task_title,
+    result = await session.execute(
+        select(ClientsORM).where(ClientsORM.code == code)
     )
-    await session.merge(client)
+    client = result.scalar_one_or_none()
+    if client:
+        client.last_status = status
+        client.last_update = datetime.now(timezone.utc)
+        client.last_task_title = task_title
+    else:
+        client = ClientsORM(
+            code=code,
+            last_status=status,
+            last_update=datetime.now(timezone.utc),
+            last_task_title=task_title,
+        )
+        session.add(client)
 
 
 async def get_client(session: AsyncSession, code: str):
