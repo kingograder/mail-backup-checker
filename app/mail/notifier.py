@@ -32,13 +32,18 @@ async def get_smtp_client() -> aiosmtplib.SMTP:
                 pass
             smtp_client = None
 
+    use_tls = config.smtp.PORT == 465
     smtp_client = aiosmtplib.SMTP(
         hostname=config.smtp.HOST,
         port=config.smtp.PORT,
+        timeout=config.smtp.TIMEOUT,
+        use_tls=use_tls,
     )
     await smtp_client.connect()
-    await smtp_client.starttls()
+    if not use_tls:
+        await smtp_client.starttls()
     await smtp_client.login(config.smtp.LOGIN, config.smtp.PASSWORD)
+    logger.info(f"SMTP connected to {config.smtp.HOST}:{config.smtp.PORT}")
     return smtp_client
 
 
@@ -51,6 +56,7 @@ async def send_email(subject: str, body: str, recipients: list[str]):
     async with smtp_lock:
         client = await get_smtp_client()
         await client.send_message(msg)
+        logger.info(f"SMTP email sent to {recipients}")
 
 
 async def check_and_notify(notification_data: dict):
@@ -58,6 +64,10 @@ async def check_and_notify(notification_data: dict):
     notify_on = config.smtp.get_notify_on_list()
 
     if status_value not in notify_on:
+        logger.debug(
+            f"Skipping SMTP for client {notification_data['code']}: "
+            f"status '{status_value}' not in notify_on {notify_on}"
+        )
         return
 
     recipients = config.smtp.get_recipients_list()

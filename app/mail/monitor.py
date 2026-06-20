@@ -20,12 +20,22 @@ logger = logging.getLogger(__name__)
 
 
 async def connect_to_imap(config: Config):
-    imap_client = aioimaplib.IMAP4_SSL(
-        host=config.imap.HOST,
-        port=config.imap.PORT,
-        timeout=config.imap.TIMEOUT,
-    )
+    use_ssl = config.imap.PORT == 993
+    if use_ssl:
+        imap_client = aioimaplib.IMAP4_SSL(
+            host=config.imap.HOST,
+            port=config.imap.PORT,
+            timeout=config.imap.TIMEOUT,
+        )
+    else:
+        imap_client = aioimaplib.IMAP4(
+            host=config.imap.HOST,
+            port=config.imap.PORT,
+            timeout=config.imap.TIMEOUT,
+        )
     await imap_client.wait_hello_from_server()
+    if not use_ssl:
+        await imap_client.starttls()
     await imap_client.login(config.imap.LOGIN, config.imap.PASSWORD)
     await imap_client.select(config.imap.FOLDER)
     return imap_client

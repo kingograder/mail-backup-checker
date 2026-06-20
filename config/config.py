@@ -22,10 +22,11 @@ class ImapSettings(Settings):
 
 class SmtpSettings(Settings):
     model_config = SettingsConfigDict(env_prefix="SMTP_")
-    HOST: str
-    PORT: int = 587
     LOGIN: str
     PASSWORD: str
+    HOST: str
+    PORT: int = 587
+    TIMEOUT: int = 30
     RECIPIENTS: str = ""
     NOTIFY_ON: str = "error,warning"
 
