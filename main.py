@@ -1,7 +1,7 @@
 import asyncio
 import logging
-import sys
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 
 import uvicorn
@@ -27,9 +27,22 @@ async def init_database():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global monitor_task
+    log_handlers = [logging.StreamHandler()]
+    if config.logging.TO_FILE:
+        Path(config.logging.DIR).mkdir(parents=True, exist_ok=True)
+        now = datetime.now()
+        filename = config.logging.FILENAME.replace("{date}", now.strftime("%Y-%m-%d"))
+        filename = filename.replace("{time}", now.strftime("%H-%M-%S"))
+        log_handlers.append(
+            logging.FileHandler(
+                f"{config.logging.DIR}/{filename}",
+                encoding="utf-8",
+            )
+        )
     logging.basicConfig(
         level=logging.getLevelName(config.logging.LEVEL),
         format=config.logging.FORMAT,
+        handlers=log_handlers,
     )
     logger.info("Application starting")
     Path(config.db.PATH).parent.mkdir(parents=True, exist_ok=True)
