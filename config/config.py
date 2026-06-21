@@ -16,7 +16,7 @@ class ImapSettings(Settings):
     HOST: str
     PORT: int = 993
     FOLDER: str = "Backup"
-    TIMEOUT: int = 30
+    TIMEOUT: int = 120
     POLL_INTERVAL: int = 60
 
 

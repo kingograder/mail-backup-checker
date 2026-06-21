@@ -38,7 +38,20 @@ async def connect_to_imap(config: Config):
         await imap_client.starttls()
     await imap_client.login(config.imap.LOGIN, config.imap.PASSWORD)
     await imap_client.select(config.imap.FOLDER)
+    logger.info(f"IMAP connected to {config.imap.HOST}:{config.imap.PORT}")
     return imap_client
+
+
+async def close_imap(imap_client):
+    if imap_client is not None:
+        try:
+            await imap_client.close()
+        except Exception:
+            pass
+        try:
+            await imap_client.logout()
+        except Exception:
+            pass
 
 
 async def get_current_max_uid(imap_client) -> int | None:
@@ -176,13 +189,14 @@ async def monitor_mailbox(config: Config, session_factory: async_sessionmaker):
                     if processed:
                         logger.info(f"Processed: {processed}, last_uid={max_uid}")
 
+        except asyncio.TimeoutError:
+            logger.error("IMAP timeout, reconnecting...")
+            await close_imap(imap_client)
+            imap_client = None
+
         except Exception as e:
             logger.error(f"Monitoring error: {e}", exc_info=True)
-            if imap_client is not None:
-                try:
-                    await imap_client.logout()
-                except Exception:
-                    pass
+            await close_imap(imap_client)
             imap_client = None
 
         await asyncio.sleep(config.imap.POLL_INTERVAL)
